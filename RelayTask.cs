@@ -1,5 +1,6 @@
 using PiGreenhouse.Drivers;
 using PiScheduler;
+using Raspberry.IO.GeneralPurpose;
 using System.Diagnostics;
 
 namespace PiGreenhouse
@@ -13,7 +14,7 @@ namespace PiGreenhouse
 
         public RelayTask(
             string name,
-            int pin,
+            ConnectorPin pin,
             int recurrence,
             int onTimeInMs)
             : base(recurrence, name, "Relay", onTimeInMs)

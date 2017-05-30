@@ -1,28 +1,16 @@
+using Raspberry.IO.GeneralPurpose;
 using System;
 using System.Diagnostics;
-using Windows.Devices.Gpio;
 
 namespace PiGreenhouse.Drivers
 {
     internal sealed class RelayDriver : IDisposable
     {
-        public RelayDriver(int pinNumber)
+        public RelayDriver(ConnectorPin pin)
         {
-            GpioPin pin;
-            GpioOpenStatus openStatus;
-            
-            var gpioController = GpioController.GetDefault();
-            gpioController.TryOpenPin(pinNumber, GpioSharingMode.Exclusive, out pin, out openStatus);
-            if (openStatus != GpioOpenStatus.PinOpened)
-            {
-                Debug.WriteLine(string.Format("Could not open pin {0}: {1}", pinNumber, openStatus));
-            }
-            else
-            {
-                _pin = pin;
-                _pin.SetDriveMode(GpioPinDriveMode.Output);
-                _pin.Write(GpioPinValue.High);
-            }
+            var driver = GpioConnectionSettings.GetBestDriver(GpioConnectionDriverCapabilities.None);
+            _pin = driver.InOut(pin);
+            _pin.Write(true);
         }
 
         /// <summary>
@@ -38,6 +26,7 @@ namespace PiGreenhouse.Drivers
         /// </summary>
         public void Dispose()
         {
+            this._pin.Dispose();
             Dispose(true);
             GC.SuppressFinalize(this);
         }
@@ -74,7 +63,7 @@ namespace PiGreenhouse.Drivers
         public void TurnRelayOn()
         {
             if (_pin == null) { return; }
-            _pin.Write(GpioPinValue.Low);
+            _pin.Write(false);
         }
 
         /// <summary>
@@ -84,7 +73,7 @@ namespace PiGreenhouse.Drivers
         {
             if (_pin != null)
             {
-                _pin.Write(GpioPinValue.High);
+                _pin.Write(true);
             }
         }
 
@@ -93,10 +82,10 @@ namespace PiGreenhouse.Drivers
         /// </summary>
         public bool? State
         {
-            get { return _pin == null ? null : (bool?)(_pin.Read() == GpioPinValue.Low); }
+            get { return _pin == null ? null : (bool?)(_pin.Read() == false); }
         }
 
         private bool _disposed;
-        private GpioPin _pin;
+        private GpioInputOutputBinaryPin _pin;
     }
 }

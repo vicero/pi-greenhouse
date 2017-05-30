@@ -2,6 +2,7 @@ using att.iot.client;
 
 using PiGreenhouse.Drivers;
 using PiScheduler;
+using Raspberry.IO.GeneralPurpose;
 
 using System.Diagnostics;
 
@@ -19,8 +20,8 @@ namespace PiGreenhouse
 
         public DoubleRelayTask(
             string name,
-            int pinA,
-            int pinB,
+            ConnectorPin pinA,
+            ConnectorPin pinB,
             string assetId,
             int recurrence,
             int onTimeInMs)
