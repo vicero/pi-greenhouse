@@ -1,6 +1,7 @@
 using PiGreenhouse.Drivers;
 using PiScheduler;
 using Raspberry.IO.GeneralPurpose;
+using System;
 using System.Diagnostics;
 
 namespace PiGreenhouse
@@ -26,16 +27,16 @@ namespace PiGreenhouse
 
         protected override void DoWork()
         {
-            Debug.WriteLine("Turning relay " + Name + " on.");
+            Console.WriteLine("Turning relay " + Name + " on.");
             _driver.TurnRelayOn();
-            Debug.WriteLine("Relay " + Name + " is " + _driver.State);
+            Console.WriteLine("Relay " + Name + " is " + _driver.State);
         }
 
         public override void OnComplete()
         {
-            Debug.WriteLine("Turning relay " + Name + " off.");
+            Console.WriteLine("Turning relay " + Name + " off.");
             _driver.TurnRelayOff();
-            Debug.WriteLine("Relay " + Name + " is " + _driver.State);
+            Console.WriteLine("Relay " + Name + " is " + _driver.State);
         }
     }
 }
