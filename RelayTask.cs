@@ -15,13 +15,15 @@ namespace PiGreenhouse
 
         public RelayTask(
             string name,
-            ConnectorPin pin,
+            ProcessorPin pin,
+            string assetId,
             int recurrence,
-            int onTimeInMs)
+            int onTimeInMs,
+            Action<string, bool?> onStatusChanged)
             : base(recurrence, name, "Relay", onTimeInMs)
         {
             _name = name;
-            _driver = new RelayDriver(pin);
+            _driver = new RelayDriver(pin, assetId, onStatusChanged);
             _onTimeInMs = onTimeInMs;
         }
 
@@ -29,14 +31,12 @@ namespace PiGreenhouse
         {
             Console.WriteLine("Turning relay " + Name + " on.");
             _driver.TurnRelayOn();
-            Console.WriteLine("Relay " + Name + " is " + _driver.State);
         }
 
         public override void OnComplete()
         {
             Console.WriteLine("Turning relay " + Name + " off.");
             _driver.TurnRelayOff();
-            Console.WriteLine("Relay " + Name + " is " + _driver.State);
         }
     }
 }

@@ -17,32 +17,41 @@ namespace PiGreenhouse
         public EnvironmentTask(
             string name,
             ConnectorPin measurePin,
-            int recurrence)
+            int recurrence,
+            IDevice attDevice)
             : base(recurrence, name, "Environment")
         {
             _name = name;
             var driver = GpioConnectionSettings.GetBestDriver(GpioConnectionDriverCapabilities.CanChangePinDirectionRapidly);
             var pin = driver.InOut(measurePin);
             _driver = new Dht11Connection(pin, autoStart: false);
-            _attDevice = new Device("vicero_hZzesPX4", "2BgYhziU");
-            _attDevice.DeviceId = "fHDlCmUC00wifPXl7SiauaT6";
+            _attDevice = attDevice;
         }
 
         protected override void DoWork()
         {
-            Console.WriteLine("Beginning read from " + Name + ".");
-            _driver.Start();
-            var reading = _driver.GetData();
+            try
+            {
+                Console.WriteLine("Beginning read from " + Name + ".");
+                _driver.Start();
+                var reading = _driver.GetData();
 
-            if (reading != null)
-            {
-                Console.WriteLine(string.Format("AttemptCount: {0} Temperature: {1} Humidity: {2}", reading.AttemptCount, reading.Temperature.DegreesCelsius, reading.RelativeHumidity.Percent));
-                _attDevice.Send("Temperature", reading.Temperature.DegreesCelsius.ToString());
-                _attDevice.Send("Humidity", reading.RelativeHumidity.Percent.ToString());
-            } else
-            {
-                Console.WriteLine("Error reading DHT11 data.");
+                if (reading != null)
+                {
+                    Console.WriteLine($"Temperature: {reading.Temperature.DegreesCelsius} Humidity: { reading.RelativeHumidity.Percent} AttemptCount: {reading.AttemptCount}");
+                    _attDevice.Send("Temperature", reading.Temperature.DegreesCelsius.ToString());
+                    _attDevice.Send("Humidity", reading.RelativeHumidity.Percent.ToString());
+                }
+                else
+                {
+                    Console.WriteLine("Error reading DHT11 data.");
+                }
             }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"{ex.Message}{System.Environment.NewLine}{ex.StackTrace}");
+            }
+            
         }
 
         public override void OnComplete()

@@ -6,11 +6,13 @@ namespace PiGreenhouse.Drivers
 {
     internal sealed class RelayDriver : IDisposable
     {
-        public RelayDriver(ConnectorPin pin)
+        public RelayDriver(ProcessorPin pin, string assetId, Action<string, bool?> onStatusChanged)
         {
-            var driver = GpioConnectionSettings.GetBestDriver(GpioConnectionDriverCapabilities.None);
-            _pin = driver.InOut(pin);
-            _pin.Write(true);
+            var driver = GpioConnectionSettings.GetBestDriver(GpioConnectionDriverCapabilities.CanSetPinResistor);
+            driver.SetPinResistor(pin, PinResistor.None);
+            _pin = driver.Out(pin);
+            _onStatusChanged = onStatusChanged;
+            AssetId = assetId;
         }
 
         /// <summary>
@@ -64,6 +66,7 @@ namespace PiGreenhouse.Drivers
         {
             if (_pin == null) { return; }
             _pin.Write(false);
+            _onStatusChanged(AssetId, true);
         }
 
         /// <summary>
@@ -74,18 +77,17 @@ namespace PiGreenhouse.Drivers
             if (_pin != null)
             {
                 _pin.Write(true);
+                _onStatusChanged(AssetId, false);
             }
         }
 
         /// <summary>
-        /// Current state of the relay.  [true] if on, [false] if off
+        /// Asset ID reported to cloud service.
         /// </summary>
-        public bool? State
-        {
-            get { return _pin == null ? null : (bool?)(_pin.Read() == false); }
-        }
+        public string AssetId { get; }
 
         private bool _disposed;
-        private GpioInputOutputBinaryPin _pin;
+        private Action<string, bool?> _onStatusChanged;
+        private GpioOutputBinaryPin _pin;
     }
 }

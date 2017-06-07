@@ -1,5 +1,3 @@
-using att.iot.client;
-
 using PiGreenhouse.Drivers;
 using PiScheduler;
 using Raspberry.IO.GeneralPurpose;
@@ -16,51 +14,39 @@ namespace PiGreenhouse
         private string _name;
         private RelayDriver _relayA;
         private RelayDriver _relayB;
-        private IDevice _attDevice;
-        private string _assetId;
 
         public DoubleRelayTask(
             string name,
             RelayDriver relayA,
-            ConnectorPin pinB,
+            ProcessorPin pinB,
             string assetId,
             int recurrence,
-            int onTimeInMs)
+            int onTimeInMs,
+            Action<string, bool?> onStatusChanged)
             : base(recurrence, name, "Relay", onTimeInMs)
         {
             _name = name;
             _relayA = relayA;
-            _relayB = new RelayDriver(pinB);
+            _relayB = new RelayDriver(pinB, assetId, onStatusChanged);
             _onTimeInMs = onTimeInMs;
-            _attDevice = new Device("vicero_hZzesPX4", "2BgYhziU");
-            _attDevice.DeviceId = "fHDlCmUC00wifPXl7SiauaT6";
-            _assetId = assetId;
         }
 
         protected override void DoWork()
         {
-            Console.WriteLine("Turning relay " + Name + ".A on.");
+            Console.WriteLine($"Turning relay {_relayA.AssetId} on.");
             _relayA.TurnRelayOn();
-            Console.WriteLine("Relay A " + Name + " is " + _relayA.State);
 
-            Console.WriteLine("Turning relay " + Name + ".B on.");
+            Console.WriteLine($"Turning relay {_relayB.AssetId} on.");
             _relayB.TurnRelayOn();
-            Console.WriteLine("Relay B " + Name + " is " + _relayB.State);
-
-            _attDevice.Send(this._assetId, true.ToString());
         }
 
         public override void OnComplete()
         {
-            Console.WriteLine("Turning relay " + Name + ".A off.");
+            Console.WriteLine($"Turning relay {_relayA.AssetId} off.");
             _relayA.TurnRelayOff();
-            Console.WriteLine("Relay A " + Name + " is " + _relayA.State);
 
-            Console.WriteLine("Turning relay " + Name + ".B off.");
+            Console.WriteLine($"Turning relay {_relayB.AssetId} off.");
             _relayB.TurnRelayOff();
-            Console.WriteLine("Relay B " + Name + " is " + _relayB.State);
-
-            _attDevice.Send(this._assetId, false.ToString());
         }
     }
 }
