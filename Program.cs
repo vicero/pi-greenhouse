@@ -15,11 +15,14 @@ namespace PiGreenhouse
 
             _pumpRelay = new RelayDriver(ConnectorPin.P1Pin15.ToProcessor(), "Pump", OnStatusChanged);
 
+            var minuteAndAHalf = (int)Math.Round(millisecondsPerMinute * 1.5);
+
             var tasks = new PiTask[] {
-                new DoubleRelayTask("Solenoid 1", relayA: _pumpRelay, pinB: ConnectorPin.P1Pin16.ToProcessor(), assetId: "Solenoid_1", recurrence: millisecondsPerMinute/2, onTimeInMs: millisecondsPerMinute/6, onStatusChanged: OnStatusChanged),
-                new DoubleRelayTask("Solenoid 2", relayA: _pumpRelay, pinB: ConnectorPin.P1Pin18.ToProcessor(), assetId: "Solenoid_2", recurrence: millisecondsPerMinute/2, onTimeInMs: millisecondsPerMinute/6, onStatusChanged: OnStatusChanged),
-                new DoubleRelayTask("Solenoid 3", relayA: _pumpRelay, pinB: ConnectorPin.P1Pin22.ToProcessor(), assetId: "Solenoid_3", recurrence: millisecondsPerMinute/2, onTimeInMs: millisecondsPerMinute/6, onStatusChanged: OnStatusChanged),
-                new EnvironmentTask("DHT11", measurePin: ConnectorPin.P1Pin37, recurrence: millisecondsPerMinute*1, attDevice: _attDevice)
+                new DoubleRelayTask("Solenoid 1", relayA: _pumpRelay, pinB: ConnectorPin.P1Pin16.ToProcessor(), assetId: "Solenoid_1", recurrence: millisecondsPerDay/2, onTimeInMs: minuteAndAHalf, onStatusChanged: OnStatusChanged),
+                new DoubleRelayTask("Solenoid 2", relayA: _pumpRelay, pinB: ConnectorPin.P1Pin18.ToProcessor(), assetId: "Solenoid_2", recurrence: millisecondsPerDay/2, onTimeInMs: minuteAndAHalf, onStatusChanged: OnStatusChanged),
+                new DoubleRelayTask("Solenoid 3", relayA: _pumpRelay, pinB: ConnectorPin.P1Pin22.ToProcessor(), assetId: "Solenoid_3", recurrence: millisecondsPerDay/2, onTimeInMs: minuteAndAHalf, onStatusChanged: OnStatusChanged),
+                new DoubleRelayTask("Solenoid 4", relayA: _pumpRelay, pinB: ConnectorPin.P1Pin13.ToProcessor(), assetId: "Solenoid_4", recurrence: millisecondsPerDay/2, onTimeInMs: minuteAndAHalf, onStatusChanged: OnStatusChanged),
+                new EnvironmentTask("DHT11", measurePin: ConnectorPin.P1Pin37, recurrence: millisecondsPerMinute*5, attDevice: _attDevice)
             };
 
             var scheduler = new Scheduler(tasks, granularityInMilliseconds: millisecondsPerMinute / 12);
