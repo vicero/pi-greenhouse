@@ -28,6 +28,7 @@ namespace PiGreenhouse
             _name = name;
             _relayA = relayA;
             _relayB = new RelayDriver(pinB, assetId, onStatusChanged);
+            _relayB.TurnRelayOff();
             _onTimeInMs = onTimeInMs;
         }
 
