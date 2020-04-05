@@ -1,62 +1,17 @@
-using Raspberry.IO.GeneralPurpose;
 using System;
-using System.Diagnostics;
+using Unosquare.RaspberryIO.Abstractions;
 
 namespace PiGreenhouse.Drivers
 {
-    internal sealed class RelayDriver : IDisposable
+    internal sealed class RelayDriver
     {
-        public RelayDriver(ProcessorPin pin, string assetId, Action<string, bool?> onStatusChanged)
+        public RelayDriver(IGpioPin pin, string assetId, Action<string, bool?> onStatusChanged)
         {
-            var driver = GpioConnectionSettings.GetBestDriver(GpioConnectionDriverCapabilities.CanSetPinResistor);
-            driver.SetPinResistor(pin, PinResistor.None);
-            _pin = driver.Out(pin);
             _onStatusChanged = onStatusChanged;
+            _pin = pin;
+            _pin.PinMode = GpioPinDriveMode.Output;
             AssetId = assetId;
-        }
-
-        /// <summary>
-        /// Deletes an instance of the <see cref="RelayDriver"/> class.
-        /// </summary>
-        ~RelayDriver()
-        {
-            Dispose(false);
-        }
-
-        /// <summary>
-        /// Releases resources used by this <see cref="RelayDriver"/> object.
-        /// </summary>
-        public void Dispose()
-        {
-            this._pin.Dispose();
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        /// <summary>
-        /// Releases the resources associated with the <see cref="RelayDriver"/> object.
-        /// </summary>
-        /// <param name="disposing">
-        /// <b>true</b> to release both managed and unmanaged resources;
-        /// <b>false</b> to release only unmanaged resources.
-        /// </param>
-        private void Dispose(bool disposing)
-        {
-            if (!_disposed)
-            {
-                try
-                {
-                    if (_pin != null)
-                    {
-                        _pin.Dispose();
-                        _pin = null;
-                    }
-                }
-                finally
-                {
-                    _disposed = true;
-                }
-            }
+            TurnRelayOff();
         }
 
         /// <summary>
@@ -64,8 +19,7 @@ namespace PiGreenhouse.Drivers
         /// </summary>
         public void TurnRelayOn()
         {
-            if (_pin == null) { return; }
-            _pin.Write(false);
+            _pin.Value = false;
             _onStatusChanged(AssetId, true);
         }
 
@@ -74,11 +28,8 @@ namespace PiGreenhouse.Drivers
         /// </summary>
         public void TurnRelayOff()
         {
-            if (_pin != null)
-            {
-                _pin.Write(true);
-                _onStatusChanged(AssetId, false);
-            }
+            _pin.Value = true;
+            _onStatusChanged(AssetId, false);
         }
 
         /// <summary>
@@ -86,8 +37,7 @@ namespace PiGreenhouse.Drivers
         /// </summary>
         public string AssetId { get; }
 
-        private bool _disposed;
-        private Action<string, bool?> _onStatusChanged;
-        private GpioOutputBinaryPin _pin;
+        private readonly Action<string, bool?> _onStatusChanged;
+        private readonly IGpioPin _pin;
     }
 }

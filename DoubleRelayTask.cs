@@ -1,9 +1,9 @@
 using PiGreenhouse.Drivers;
 using PiScheduler;
-using Raspberry.IO.GeneralPurpose;
 
 using System;
 using System.Diagnostics;
+using Unosquare.RaspberryIO.Abstractions;
 
 namespace PiGreenhouse
 {
@@ -18,7 +18,7 @@ namespace PiGreenhouse
         public DoubleRelayTask(
             string name,
             RelayDriver relayA,
-            ProcessorPin pinB,
+            IGpioPin pinB,
             string assetId,
             int recurrence,
             int onTimeInMs,
@@ -28,7 +28,6 @@ namespace PiGreenhouse
             _name = name;
             _relayA = relayA;
             _relayB = new RelayDriver(pinB, assetId, onStatusChanged);
-            _relayB.TurnRelayOff();
             _onTimeInMs = onTimeInMs;
         }
 

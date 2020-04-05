@@ -1,21 +1,20 @@
 using PiGreenhouse.Drivers;
 using PiScheduler;
-using Raspberry.IO.GeneralPurpose;
 using System;
 using System.Diagnostics;
+using Unosquare.RaspberryIO.Abstractions;
 
 namespace PiGreenhouse
 {
     [DebuggerDisplay("{ _name } { NextOccurrence }")]
     internal sealed class RelayTask : PiTask
     {
-        private int _onTimeInMs;
         private string _name;
-        private RelayDriver _driver;
+        private readonly RelayDriver _driver;
 
         public RelayTask(
             string name,
-            ProcessorPin pin,
+            IGpioPin pin,
             string assetId,
             int recurrence,
             int onTimeInMs,
@@ -24,7 +23,6 @@ namespace PiGreenhouse
         {
             _name = name;
             _driver = new RelayDriver(pin, assetId, onStatusChanged);
-            _onTimeInMs = onTimeInMs;
         }
 
         protected override void DoWork()

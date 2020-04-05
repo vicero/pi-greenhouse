@@ -1,53 +1,88 @@
-﻿using att.iot.client;
-using PiGreenhouse.Drivers;
+﻿using PiGreenhouse.Drivers;
 using PiScheduler;
-using Raspberry.IO.GeneralPurpose;
 using System;
+using Unosquare.RaspberryIO;
 
 namespace PiGreenhouse
 {
-    class Program
+    public static class Program
     {
         static void Main(string[] args)
         {
-            _attDevice = new Device("vicero_hZzesPX4", "2BgYhziU");
-            _attDevice.DeviceId = "fHDlCmUC00wifPXl7SiauaT6";
-
-            _pumpRelay = new RelayDriver(ConnectorPin.P1Pin15.ToProcessor(), "Pump", OnStatusChanged);
-
-            var minuteAndAHalf = (int)Math.Round(millisecondsPerMinute * 1.5);
+            var twoMinutes = (int)Math.Round(MillisecondsPerMinute * 2m);
 
             var tasks = new PiTask[] {
-                new DoubleRelayTask("Solenoid 1", relayA: _pumpRelay, pinB: ConnectorPin.P1Pin16.ToProcessor(), assetId: "Solenoid_1", recurrence: millisecondsPerDay/2, onTimeInMs: minuteAndAHalf, onStatusChanged: OnStatusChanged),
-                new DoubleRelayTask("Solenoid 2", relayA: _pumpRelay, pinB: ConnectorPin.P1Pin18.ToProcessor(), assetId: "Solenoid_2", recurrence: millisecondsPerDay/2, onTimeInMs: minuteAndAHalf, onStatusChanged: OnStatusChanged),
-                new DoubleRelayTask("Solenoid 3", relayA: _pumpRelay, pinB: ConnectorPin.P1Pin22.ToProcessor(), assetId: "Solenoid_3", recurrence: millisecondsPerDay/2, onTimeInMs: minuteAndAHalf, onStatusChanged: OnStatusChanged),
-                new DoubleRelayTask("Solenoid 4", relayA: _pumpRelay, pinB: ConnectorPin.P1Pin13.ToProcessor(), assetId: "Solenoid_4", recurrence: millisecondsPerDay/2, onTimeInMs: minuteAndAHalf, onStatusChanged: OnStatusChanged),
-                new EnvironmentTask("DHT11", measurePin: ConnectorPin.P1Pin37, recurrence: millisecondsPerMinute*5, attDevice: _attDevice)
+                new DoubleRelayTask("Solenoid 3", relayA: PumpRelay, pinB: Pi.Gpio[13], assetId: "Solenoid_1", recurrence: MillisecondsPerDay/2, onTimeInMs: twoMinutes, onStatusChanged: OnStatusChanged),
+                new DoubleRelayTask("Solenoid 1", relayA: PumpRelay, pinB: Pi.Gpio[16], assetId: "Solenoid_2", recurrence: MillisecondsPerDay/2, onTimeInMs: twoMinutes, onStatusChanged: OnStatusChanged),
+                new DoubleRelayTask("Solenoid 2", relayA: PumpRelay, pinB: Pi.Gpio[18], assetId: "Solenoid_3", recurrence: MillisecondsPerDay/2, onTimeInMs: twoMinutes, onStatusChanged: OnStatusChanged),
+                new DoubleRelayTask("Solenoid 4", relayA: PumpRelay, pinB: Pi.Gpio[22], assetId: "Solenoid_4", recurrence: MillisecondsPerDay/2, onTimeInMs: twoMinutes, onStatusChanged: OnStatusChanged),
+                new EnvironmentTask("DHT11", pin: Pi.Gpio[37], recurrence: MillisecondsPerMinute*5, sendIoTMessage: Program.SendIoTMessage)
             };
 
-            var scheduler = new Scheduler(tasks, granularityInMilliseconds: millisecondsPerMinute / 12);
+            var scheduler = new Scheduler(tasks, granularityInMilliseconds: MillisecondsPerMinute / 12);
             scheduler.Run();
         }
 
-        public static void OnStatusChanged(string assetId, bool? state)
+        private static void OnStatusChanged(string assetId, bool? state)
         {
             if (state != null)
             {
-                try
-                {
-                    _attDevice.Send(assetId, state.ToString());
-                    Console.WriteLine($"Relay {assetId} is {(state.Value ? "on" : "off")}.");
-                } catch (Exception ex)
-                {
-                    Console.WriteLine($"{ex.Message}{System.Environment.NewLine}{ex.StackTrace}");
-                }
+                SendIoTMessage(assetId, state.ToString());
+                Console.WriteLine($"{DateTime.Now.ToUniversalTime()} Relay {assetId} is {(state.Value ? "on" : "off")}.");
             }
         }
 
-        private const int millisecondsPerDay = 86400000;
-        private const int millisecondsPerMinute = 60000;
+        private static void SendIoTMessage(string assetId, string? message)
+        {
+            // TODO: restore and test
+            // try
+            // {
+            //     if (!Program._attDevice.HasValue)
+            //     {
+            //         var device = new Device("vicero_hZzesPX4", "2BgYhziU", apiUri: "https://api.allthingstalk.io");
+            //         device.DeviceId = "fHDlCmUC00wifPXl7SiauaT6";
+            //         Program._attDevice = Maybe<Device>.Some(device);
+            //     }
+            //     Program._attDevice.Value.Send(assetId, message);
+            // }
+            // catch (Exception ex)
+            // {
+            //     // exceptions sending IoT messages should not take down the application
+            //     Console.WriteLine(ex.ToString());
+            // }
+        }
 
-        private static Device _attDevice;
-        private static RelayDriver _pumpRelay;
+        //public static void SubscribeToActuator(string actuatorAssetId, Scheduler scheduler, PiTask task)
+        //{
+        //    // TODO: restore and test
+        //    try
+        //    {
+        //        if (!Program._attDevice.HasValue)
+        //        {
+        //            var device = new Device("vicero_hZzesPX4", "2BgYhziU", apiUri: "https://api.allthingstalk.io");
+        //            device.DeviceId = "fHDlCmUC00wifPXl7SiauaT6";
+        //            Program._attDevice = Maybe<Device>.Some(device);
+        //        }
+        //        Program._attDevice.Value.ActuatorValue += (sender, e) =>
+        //        {
+        //            if (e.Asset == actuatorAssetId && e.Value.Value<bool>("value"))
+        //            {
+        //                scheduler.RunTask(task);
+        //            }
+        //            Program._attDevice.Value.UpdateAsset(actuatorAssetId, JObject.FromObject(new { value = false }));
+        //        };
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        // exceptions sending IoT messages should not take down the application
+        //        Console.WriteLine(ex.ToString());
+        //    }
+        //}
+
+        private const int MillisecondsPerDay = 86400000;
+        private const int MillisecondsPerMinute = 60000;
+
+        // private static Maybe<Device> _attDevice;
+        private static readonly RelayDriver PumpRelay = new RelayDriver(Pi.Gpio[15], "Pump", OnStatusChanged);
     }
 }
