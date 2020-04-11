@@ -54,7 +54,7 @@ namespace PiGreenhouse
             }
             catch (Exception ex)
             {
-                Log.Error($"{ex.Message}{System.Environment.NewLine}{ex.StackTrace}");
+                Log.Error(ex, "Environment task failed");
             }
         }
     }

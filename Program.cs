@@ -21,24 +21,24 @@ namespace PiGreenhouse
                 Log.Information("Bootstrapping wiring");
 
                 Pi.Init<BootstrapWiringPi>();
-                PumpRelay = new RelayDriver(Pi.Gpio[BcmPin.Gpio00], "Pump", OnStatusChanged);
-                var twoMinutes = (int) Math.Round(MillisecondsPerMinute * 2m);
+                _pumpRelay = new RelayDriver(Pi.Gpio[BcmPin.Gpio00], "Pump", OnStatusChanged);
+                var twoMinutes = MillisecondsPerMinute * 2;
 
                 var tasks = new PiTask[]
                 {
-                    new DoubleRelayTask("Solenoid 3", relayA: PumpRelay, pinB: Pi.Gpio[BcmPin.Gpio02],
+                    new DoubleRelayTask("Solenoid 3", relayA: _pumpRelay, pinB: Pi.Gpio[BcmPin.Gpio02],
                         assetId: "Solenoid_1", recurrence: MillisecondsPerDay / 2, onTimeInMs: twoMinutes,
                         onStatusChanged: OnStatusChanged),
-                    new DoubleRelayTask("Solenoid 1", relayA: PumpRelay, pinB: Pi.Gpio[BcmPin.Gpio03],
+                    new DoubleRelayTask("Solenoid 1", relayA: _pumpRelay, pinB: Pi.Gpio[BcmPin.Gpio03],
                         assetId: "Solenoid_2", recurrence: MillisecondsPerDay / 2, onTimeInMs: twoMinutes,
                         onStatusChanged: OnStatusChanged),
-                    new DoubleRelayTask("Solenoid 2", relayA: PumpRelay, pinB: Pi.Gpio[BcmPin.Gpio21],
+                    new DoubleRelayTask("Solenoid 2", relayA: _pumpRelay, pinB: Pi.Gpio[BcmPin.Gpio21],
                         assetId: "Solenoid_3", recurrence: MillisecondsPerDay / 2, onTimeInMs: twoMinutes,
                         onStatusChanged: OnStatusChanged),
-                    new DoubleRelayTask("Solenoid 4", relayA: PumpRelay, pinB: Pi.Gpio[BcmPin.Gpio22],
+                    new DoubleRelayTask("Solenoid 4", relayA: _pumpRelay, pinB: Pi.Gpio[BcmPin.Gpio22],
                         assetId: "Solenoid_4", recurrence: MillisecondsPerDay / 2, onTimeInMs: twoMinutes,
                         onStatusChanged: OnStatusChanged),
-                    new EnvironmentTask("DHT11", pin: Pi.Gpio[BcmPin.Gpio25], recurrence: MillisecondsPerMinute * 5,
+                    new EnvironmentTask("DHT11", pin: Pi.Gpio[BcmPin.Gpio25], recurrence: twoMinutes,
                         sendIoTMessage: Program.SendIoTMessage)
                 };
                 Log.Information("Scheduling Tasks", tasks);
@@ -58,7 +58,7 @@ namespace PiGreenhouse
             if (state != null)
             {
                 SendIoTMessage(assetId, state.ToString());
-                Log.Information($"{DateTime.Now.ToUniversalTime()} Relay {assetId} is {(state.Value ? "on" : "off")}.");
+                Log.Information("Relay {AssetId} is {State}", assetId, state.Value ? "on" : "off");
             }
         }
 
@@ -113,6 +113,6 @@ namespace PiGreenhouse
         private const int MillisecondsPerMinute = 60000;
 
         // private static Maybe<Device> _attDevice;
-        private static RelayDriver? PumpRelay;
+        private static RelayDriver? _pumpRelay;
     }
 }
