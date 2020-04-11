@@ -1,5 +1,6 @@
 ﻿using PiGreenhouse.Drivers;
 using PiScheduler;
+using Serilog;
 using System;
 using Unosquare.RaspberryIO;
 using Unosquare.RaspberryIO.Abstractions;
@@ -11,20 +12,45 @@ namespace PiGreenhouse
     {
         static void Main(string[] args)
         {
-            Pi.Init<BootstrapWiringPi>();
-            PumpRelay = new RelayDriver(Pi.Gpio[BcmPin.Gpio00], "Pump", OnStatusChanged);
-            var twoMinutes = (int)Math.Round(MillisecondsPerMinute * 2m);
+            Log.Logger = new LoggerConfiguration()
+                .WriteTo.Console()
+                .WriteTo.File("log.txt", rollingInterval: RollingInterval.Day)
+                .CreateLogger();
+            try
+            {
+                Log.Information("Bootstrapping wiring");
 
-            var tasks = new PiTask[] {
-                new DoubleRelayTask("Solenoid 3", relayA: PumpRelay, pinB: Pi.Gpio[BcmPin.Gpio02], assetId: "Solenoid_1", recurrence: MillisecondsPerDay/2, onTimeInMs: twoMinutes, onStatusChanged: OnStatusChanged),
-                new DoubleRelayTask("Solenoid 1", relayA: PumpRelay, pinB: Pi.Gpio[BcmPin.Gpio03], assetId: "Solenoid_2", recurrence: MillisecondsPerDay/2, onTimeInMs: twoMinutes, onStatusChanged: OnStatusChanged),
-                new DoubleRelayTask("Solenoid 2", relayA: PumpRelay, pinB: Pi.Gpio[BcmPin.Gpio21], assetId: "Solenoid_3", recurrence: MillisecondsPerDay/2, onTimeInMs: twoMinutes, onStatusChanged: OnStatusChanged),
-                new DoubleRelayTask("Solenoid 4", relayA: PumpRelay, pinB: Pi.Gpio[BcmPin.Gpio22], assetId: "Solenoid_4", recurrence: MillisecondsPerDay/2, onTimeInMs: twoMinutes, onStatusChanged: OnStatusChanged),
-                new EnvironmentTask("DHT11", pin: Pi.Gpio[BcmPin.Gpio25], recurrence: MillisecondsPerMinute*5, sendIoTMessage: Program.SendIoTMessage)
-            };
+                Pi.Init<BootstrapWiringPi>();
+                PumpRelay = new RelayDriver(Pi.Gpio[BcmPin.Gpio00], "Pump", OnStatusChanged);
+                var twoMinutes = (int) Math.Round(MillisecondsPerMinute * 2m);
 
-            var scheduler = new Scheduler(tasks, granularityInMilliseconds: MillisecondsPerMinute / 12);
-            scheduler.Run();
+                var tasks = new PiTask[]
+                {
+                    new DoubleRelayTask("Solenoid 3", relayA: PumpRelay, pinB: Pi.Gpio[BcmPin.Gpio02],
+                        assetId: "Solenoid_1", recurrence: MillisecondsPerDay / 2, onTimeInMs: twoMinutes,
+                        onStatusChanged: OnStatusChanged),
+                    new DoubleRelayTask("Solenoid 1", relayA: PumpRelay, pinB: Pi.Gpio[BcmPin.Gpio03],
+                        assetId: "Solenoid_2", recurrence: MillisecondsPerDay / 2, onTimeInMs: twoMinutes,
+                        onStatusChanged: OnStatusChanged),
+                    new DoubleRelayTask("Solenoid 2", relayA: PumpRelay, pinB: Pi.Gpio[BcmPin.Gpio21],
+                        assetId: "Solenoid_3", recurrence: MillisecondsPerDay / 2, onTimeInMs: twoMinutes,
+                        onStatusChanged: OnStatusChanged),
+                    new DoubleRelayTask("Solenoid 4", relayA: PumpRelay, pinB: Pi.Gpio[BcmPin.Gpio22],
+                        assetId: "Solenoid_4", recurrence: MillisecondsPerDay / 2, onTimeInMs: twoMinutes,
+                        onStatusChanged: OnStatusChanged),
+                    new EnvironmentTask("DHT11", pin: Pi.Gpio[BcmPin.Gpio25], recurrence: MillisecondsPerMinute * 5,
+                        sendIoTMessage: Program.SendIoTMessage)
+                };
+                Log.Information("Scheduling Tasks", tasks);
+
+                var scheduler = new Scheduler(tasks, granularityInMilliseconds: MillisecondsPerMinute / 12);
+                scheduler.Run();
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Fatal Error");
+                throw;
+            }
         }
 
         private static void OnStatusChanged(string assetId, bool? state)
@@ -32,7 +58,7 @@ namespace PiGreenhouse
             if (state != null)
             {
                 SendIoTMessage(assetId, state.ToString());
-                Console.WriteLine($"{DateTime.Now.ToUniversalTime()} Relay {assetId} is {(state.Value ? "on" : "off")}.");
+                Log.Information($"{DateTime.Now.ToUniversalTime()} Relay {assetId} is {(state.Value ? "on" : "off")}.");
             }
         }
 

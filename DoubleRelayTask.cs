@@ -1,8 +1,9 @@
-using PiGreenhouse.Drivers;
-using PiScheduler;
-
 using System;
 using System.Diagnostics;
+
+using PiGreenhouse.Drivers;
+using PiScheduler;
+using Serilog;
 using Unosquare.RaspberryIO.Abstractions;
 
 namespace PiGreenhouse
@@ -33,19 +34,19 @@ namespace PiGreenhouse
 
         protected override void DoWork()
         {
-            Console.WriteLine($"Turning relay {_relayA.AssetId} on.");
+            Log.Information($"Turning relay {_relayA.AssetId} on.");
             _relayA.TurnRelayOn();
 
-            Console.WriteLine($"Turning relay {_relayB.AssetId} on.");
+            Log.Information($"Turning relay {_relayB.AssetId} on.");
             _relayB.TurnRelayOn();
         }
 
         public override void OnComplete()
         {
-            Console.WriteLine($"Turning relay {_relayA.AssetId} off.");
+            Log.Information($"Turning relay {_relayA.AssetId} off.");
             _relayA.TurnRelayOff();
 
-            Console.WriteLine($"Turning relay {_relayB.AssetId} off.");
+            Log.Information($"Turning relay {_relayB.AssetId} off.");
             _relayB.TurnRelayOff();
         }
     }

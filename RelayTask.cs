@@ -2,6 +2,7 @@ using PiGreenhouse.Drivers;
 using PiScheduler;
 using System;
 using System.Diagnostics;
+using Serilog;
 using Unosquare.RaspberryIO.Abstractions;
 
 namespace PiGreenhouse
@@ -27,13 +28,13 @@ namespace PiGreenhouse
 
         protected override void DoWork()
         {
-            Console.WriteLine("Turning relay " + Name + " on.");
+            Log.Information("Turning relay {Relay} on", Name);
             _driver.TurnRelayOn();
         }
 
         public override void OnComplete()
         {
-            Console.WriteLine("Turning relay " + Name + " off.");
+            Log.Information("Turning relay {Relay} off", Name);
             _driver.TurnRelayOff();
         }
     }

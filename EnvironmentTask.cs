@@ -1,6 +1,7 @@
 using PiScheduler;
 using System;
 using System.Diagnostics;
+using Serilog;
 using Unosquare.RaspberryIO.Abstractions;
 using Unosquare.RaspberryIO.Peripherals;
 
@@ -34,7 +35,7 @@ namespace PiGreenhouse
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"{ex.Message}{System.Environment.NewLine}{ex.StackTrace}");
+                Log.Error($"{ex.Message}{System.Environment.NewLine}{ex.StackTrace}");
             }
         }
 
@@ -49,10 +50,11 @@ namespace PiGreenhouse
             {
                 _sendIoTMessage("Temperature", e.Temperature.ToString());
                 _sendIoTMessage("Humidity", e.HumidityPercentage.ToString());
+                Log.Information("Environment: {Temperature} {Humidity}", e.Temperature, e.HumidityPercentage);
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"{ex.Message}{System.Environment.NewLine}{ex.StackTrace}");
+                Log.Error($"{ex.Message}{System.Environment.NewLine}{ex.StackTrace}");
             }
         }
     }
